@@ -1,0 +1,642 @@
+#include <glad.h>
+#include <GLFW/glfw3.h>
+#include <iostream>
+
+#include <shader.hpp>
+
+
+#include <glm.hpp>
+#include <gtx/transform.hpp>
+#include <objload.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+GLuint VAO;
+GLuint VBO;
+GLuint VAO1;
+GLuint VBO1;
+GLuint VAO2;
+GLuint VBO2;
+GLuint VAO3;
+GLuint VBO3;
+GLuint VAO4;
+GLuint VBO4;
+GLuint VAO5;
+GLuint VBO5;
+GLuint VBOColor;
+GLuint IBO;
+GLuint TextureID;
+using namespace glm;
+double Xpos, Ypos ;
+mat4 Model;
+
+
+vec3 lightColor(1.0f, 1.0f, 10.0f) ;
+vec3 lightPos(0.0f, 10.0f, 10.0f);
+
+
+mat4 Projection;
+
+
+std::vector<vec3> position;
+std::vector<vec2> texture;
+std::vector<vec3> normals;
+
+struct STRVertex
+{
+ vec3 position;
+ vec3 couleur;
+ vec2 texture;
+};
+
+
+
+void Resize(GLFWwindow* window, int width, int height)
+{
+glViewport(0, 0, width, height);
+}
+
+
+// une seule texture
+unsigned int text;
+void InitTexture(void)
+{
+glGenTextures(1, &text);
+glBindTexture(GL_TEXTURE_2D, text);
+// set the texture wrapping/filtering options (on the currently bound texture object)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+// load and generate the texture
+int width, height, nrChannels;
+unsigned char *data = stbi_load("textures/pyr.jpg", &width, &height, &nrChannels, 0);
+if (data)
+{
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+}
+else
+{
+    std::cout << "Failed to load texture" << std::endl;
+}
+stbi_image_free(data);
+
+};
+
+
+
+unsigned int text2;
+void InitTexture2(void)
+{
+glGenTextures(1, &text2);
+glBindTexture(GL_TEXTURE_2D, text2);
+// set the texture wrapping/filtering options (on the currently bound texture object)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+// load and generate the texture
+int width, height, nrChannels;
+unsigned char *data = stbi_load("textures/Soil.jpg", &width, &height, &nrChannels, 0);
+if (data)
+{
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+}
+else
+{
+    std::cout << "Failed to load texture" << std::endl;
+}
+stbi_image_free(data);
+
+};
+
+unsigned int text3;
+void InitTexture3(void)
+{
+glGenTextures(1, &text3);
+glBindTexture(GL_TEXTURE_2D, text3);
+// set the texture wrapping/filtering options (on the currently bound texture object)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+// load and generate the texture
+int width, height, nrChannels;
+unsigned char *data = stbi_load("textures/sky.jpg", &width, &height, &nrChannels, 0);
+if (data)
+{
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+}
+else
+{
+    std::cout << "Failed to load texture" << std::endl;
+}
+stbi_image_free(data);
+};
+
+unsigned int text4;
+void InitTexture4(void)
+{
+glGenTextures(1, &text4);
+glBindTexture(GL_TEXTURE_2D, text4);
+// set the texture wrapping/filtering options (on the currently bound texture object)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+// load and generate the texture
+int width, height, nrChannels;
+unsigned char *data = stbi_load("textures/plante.jpg", &width, &height, &nrChannels, 0);
+if (data)
+{
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+}
+else
+{
+    std::cout << "Failed to load texture" << std::endl;
+}
+stbi_image_free(data);
+};
+
+
+
+
+
+int main()
+{
+if (!glfwInit()) {
+    printf("Could not initialize glfw.\n");
+    return -1;
+}
+
+glfwWindowHint(GLFW_SAMPLES, 4);
+glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR , 3);
+glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
+
+GLFWwindow* window;
+window = glfwCreateWindow(640, 480, "Projet GL", NULL, NULL);
+
+if (!window)
+{
+    glfwTerminate();
+return -1;
+}
+
+glfwMakeContextCurrent(window);
+
+if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+{
+ printf("Could not initialize GLAD");
+return -1;
+}
+loadOBJ("model/Palm_01.obj", position, texture, normals);
+
+
+GLuint ShaderProgram;
+ShaderProgram = LoadShaders( "shader/SimpleVertexShader.vertexshader",
+"shader/SimpleFragmentShader.fragmentshader" );
+
+STRVertex vertices[] = {
+
+        vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, -1.0f),vec2(0.0f,0.0f),
+         vec3(0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, -1.0f),vec2(1.0f,0.0f),
+         vec3(0.0f, 0.5f, 0.0f), vec3(0.0f, 0.0f, -1.0f),vec2(0.5f,1.0f),
+
+        vec3(-0.5f, -0.5f, 0.5f), vec3(0.0f, 0.0f, 1.0f),vec2(0.0f,0.0f),
+        vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, 0.0f, 1.0f),vec2(1.0f,0.0f),
+        vec3(0.0f, 0.5f, 0.0f), vec3(0.0f, 0.0f, 1.0f),vec2(0.5f,1.0f),
+
+        vec3(-0.5f, -0.5f, -0.5f),vec3(-1.0f, 0.0f, 0.0f),vec2(0.0f,0.0f),
+        vec3(-0.5f, -0.5f, 0.5f),vec3(-1.0f, 0.0f, 0.0f),vec2(1.0f,0.0f),
+        vec3(0.0f, 0.5f, 0.0f),vec3(-1.0f, 0.0f, 0.0f),vec2(0.5f,1.0f),
+
+        vec3(0.5f, -0.5f, -0.5f),vec3(1.0f, 0.0f, 0.0f),vec2(0.0f,0.0f),
+        vec3(0.5f, -0.5f, 0.5f),vec3(1.0f, 0.0f, 0.0f),vec2(1.0f,0.0f),
+        vec3(0.0f, 0.5f, 0.0f),vec3(1.0f, 0.0f, 0.0f),vec2(0.5f,1.0f),
+
+
+         vec3(0.5f, -0.5f, -0.5f),vec3(0.0f, -1.0f, 0.0f),vec2(0.0f,0.0f),
+         vec3(0.5f, -0.5f, 0.5f),vec3(0.0f, -1.0f, 0.0f),vec2(1.0f,0.0f),
+        vec3(0.0f, 0.5f, 0.0f),vec3(0.0f, -1.0f, 0.0f),vec2(0.5f,1.0f),
+
+         vec3(-0.5f, -0.5f, 0.5f),vec3(0.0f, 1.0f, 0.0f),vec2(0.0f,0.0f),
+         vec3(-0.5f, -0.5f, -0.5f),vec3(0.0f, 1.0f, 0.0f),vec2(1.0f,0.0f),
+        vec3(0.0f, 0.5f, 0.0f),vec3(0.0f, 1.0f, 0.0f),vec2(0.5f,1.0f),
+
+};
+
+
+STRVertex vertices2[] = {
+
+        vec3(-1.0f, -1.0f, -1.0f), vec3(0.0f, 0.0f, -1.0f),vec2(0.0f,0.0f),
+         vec3(1.0f, -1.0f, -1.0f), vec3(0.0f, 0.0f, -1.0f),vec2(1.0f,0.0f),
+         vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),vec2(0.5f,1.0f),
+
+        vec3(-1.0f, -1.0f, 1.0f), vec3(0.0f, 0.0f, 1.0f),vec2(0.0f,0.0f),
+        vec3(1.0f, -1.0f, 1.0f), vec3(0.0f, 0.0f, 1.0f),vec2(1.0f,0.0f),
+        vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f),vec2(0.5f,1.0f),
+
+        vec3(-1.0f, -1.0f, -1.0f),vec3(-1.0f, 0.0f, 0.0f),vec2(0.0f,0.0f),
+        vec3(-1.0f, -1.0f, 1.0f),vec3(-1.0f, 0.0f, 0.0f),vec2(1.0f,0.0f),
+        vec3(0.0f, 1.0f, 0.0f),vec3(-1.0f, 0.0f, 0.0f),vec2(0.5f,1.0f),
+
+        vec3(1.0f, -1.0f, -1.0f),vec3(1.0f, 0.0f, 0.0f),vec2(0.0f,0.0f),
+        vec3(1.0f, -1.0f, 1.0f),vec3(1.0f, 0.0f, 0.0f),vec2(1.0f,0.0f),
+        vec3(0.0f, 1.0f, 0.0f),vec3(1.0f, 0.0f, 0.0f),vec2(0.5f,1.0f),
+
+
+         vec3(1.0f, -1.0f, -1.0f),vec3(0.0f, -1.0f, 0.0f),vec2(0.0f,0.0f),
+         vec3(1.0f, -1.0f, 1.0f),vec3(0.0f, -1.0f, 0.0f),vec2(1.0f,0.0f),
+        vec3(0.0f, 1.0f, 0.0f),vec3(0.0f, -1.0f, 0.0f),vec2(0.5f,1.0f),
+
+         vec3(-1.0f, -1.0f, 1.0f),vec3(0.0f, 1.0f, 0.0f),vec2(0.0f,0.0f),
+         vec3(-1.0f, -1.0f, -1.0f),vec3(0.0f, 1.0f, 0.0f),vec2(1.0f,0.0f),
+        vec3(0.0f, 1.0f, 0.0f),vec3(0.0f, 1.0f, 0.0f),vec2(0.5f,1.0f),
+};
+
+STRVertex vertices3[] = {
+         vec3(1.0f, 0.0f,1.0f),vec3(1.0f, 0.0f, 0.0f),vec2(0.0f,0.0f),
+         vec3(1.0f, 0.0f,-1.0f),vec3(1.0f, 0.0f, 0.0f),vec2(1.0f,0.0f),
+         vec3(-1.0f, 0.0f,1.0f), vec3(1.0f, 0.0f, 0.0f),vec2(0.5f,1.0f),
+
+         vec3(-1.0f, 0.0f, -1.0f), vec3(1.0f, 0.0f, 0.0f),vec2(0.0f,0.0f),
+         vec3(1.0f, 0.0f, -1.0f), vec3(1.0f, 0.0f, 0.0f),vec2(1.0f,0.0f),
+         vec3(-1.0f, 0.0f, 1.0f), vec3(1.0f, 0.0f, 0.0f),vec2(0.5f,1.0f),
+};
+
+STRVertex vertices4[] = {
+         vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f),vec2(0.0f,0.0f),
+         vec3(-1.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f),vec2(1.0f,0.0f),
+         vec3(1.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f),vec2(0.5f,1.0f),
+
+         vec3(-1.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f),vec2(0.0f,0.0f),
+         vec3(-1.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f),vec2(1.0f,0.0f),
+         vec3(1.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f),vec2(0.5f,1.0f),
+
+};
+
+
+
+glGenVertexArrays(1, &VAO);
+//glGentextutes(GLuint n, GLuint *tab_texture) ;
+glBindVertexArray(VAO);
+
+glGenBuffers(1, &VBO);
+glBindBuffer(GL_ARRAY_BUFFER, VBO);
+glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*)offsetof(STRVertex,position) );
+glEnableVertexAttribArray(0);
+
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*)offsetof(STRVertex,couleur) );
+glEnableVertexAttribArray(1);
+glEnableVertexAttribArray(2);
+glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*) offsetof(STRVertex,texture) );
+
+//vao1 vbo1
+glGenVertexArrays(1, &VAO1);
+glBindVertexArray(VAO1);
+
+glGenBuffers(1, &VBO1);
+glBindBuffer(GL_ARRAY_BUFFER, VBO1);
+glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*)offsetof(STRVertex,position) );
+glEnableVertexAttribArray(0);
+
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*)offsetof(STRVertex,couleur) );
+glEnableVertexAttribArray(1);
+glEnableVertexAttribArray(2);
+glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*) offsetof(STRVertex,texture) );
+
+
+//vao2 vbo2
+glGenVertexArrays(1, &VAO2);
+glBindVertexArray(VAO2);
+
+glGenBuffers(1, &VBO2);
+glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
+
+
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*)offsetof(STRVertex,position) );
+glEnableVertexAttribArray(0);
+
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*)offsetof(STRVertex,couleur) );
+glEnableVertexAttribArray(1);
+glEnableVertexAttribArray(2);
+glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*) offsetof(STRVertex,texture) );
+
+//vao3 vbo3
+glGenVertexArrays(1, &VAO3);
+glBindVertexArray(VAO3);
+
+glGenBuffers(1, &VBO3);
+glBindBuffer(GL_ARRAY_BUFFER, VBO3);
+glBufferData(GL_ARRAY_BUFFER, sizeof(vertices3), vertices3, GL_STATIC_DRAW);
+
+
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*)offsetof(STRVertex,position) );
+glEnableVertexAttribArray(0);
+
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*)offsetof(STRVertex,couleur) );
+glEnableVertexAttribArray(1);
+glEnableVertexAttribArray(2);
+glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*) offsetof(STRVertex,texture) );
+
+//vao4 vbo4
+glGenVertexArrays(1, &VAO4);
+glBindVertexArray(VAO4);
+
+glGenBuffers(1, &VBO4);
+glBindBuffer(GL_ARRAY_BUFFER, VBO4);
+glBufferData(GL_ARRAY_BUFFER, sizeof(vertices4), vertices4, GL_STATIC_DRAW);
+
+
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*)offsetof(STRVertex,position) );
+glEnableVertexAttribArray(0);
+
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*)offsetof(STRVertex,couleur) );
+glEnableVertexAttribArray(1);
+glEnableVertexAttribArray(2);
+glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*) offsetof(STRVertex,texture) );
+
+//vao5 vbo5 loaded object
+glGenVertexArrays(1, &VAO5);
+glBindVertexArray(VAO5);
+glGenBuffers(1, &VBO5);
+glBindBuffer(GL_ARRAY_BUFFER, VBO5);
+glBufferData(GL_ARRAY_BUFFER, position.size() * sizeof(vec3), &position[0], GL_STATIC_DRAW);
+glEnableVertexAttribArray(0);
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0 );
+
+glGenBuffers(1, &VBOColor);
+glBindBuffer(GL_ARRAY_BUFFER, VBOColor);
+glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(vec3), &normals[0], GL_STATIC_DRAW);
+glEnableVertexAttribArray(1);
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,3 * sizeof(GLfloat), (void*)0 );
+glEnableVertexAttribArray(1);
+glEnableVertexAttribArray(2);
+glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(STRVertex) , (void*) offsetof(STRVertex,texture) );
+
+
+
+float rayon = 5.0;
+
+vec3 camPos = vec3(0.0f, 0.0f, 10.0f);
+vec3 camDirection = vec3(0.0f, 0.0f, 0.0f);
+vec3 camUp = vec3(0.0f, 1.0f, 0.0f);
+float camSpeed = 0.005f;
+
+
+mat4 Projection = perspective(radians(30.0f), 4.0f / 3.0f, 1.0f, 50.0f);
+mat4 View = lookAt(camPos,camDirection,camUp);
+
+
+
+glEnable(GL_DEPTH_TEST);
+glDepthFunc(GL_LESS);
+
+InitTexture();
+InitTexture2();
+InitTexture3();
+InitTexture4();
+
+
+
+
+while (!glfwWindowShouldClose(window)){
+
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) ;
+    glUseProgram(ShaderProgram);
+
+    TextureID = glGetUniformLocation(ShaderProgram, "ourTexture");
+
+    GLuint LightClrID = glGetUniformLocation(ShaderProgram, "lightColor");
+    glUniform3fv(LightClrID, 1, &lightColor[0]);
+
+    GLuint LightPosID = glGetUniformLocation(ShaderProgram, "lightPos");
+    glUniform3fv(LightPosID, 1, &lightPos[0]);
+
+    //------------------------------------------------------------------------------
+    glBindVertexArray(VAO);
+
+     if (glfwGetKey (window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    camPos += camSpeed *  vec3(0.0f, 0.0f, 1.0f);
+    if (glfwGetKey (window, GLFW_KEY_UP) == GLFW_PRESS)
+    camPos -= camSpeed *  vec3(0.0f, 0.0f, 1.0f);
+    if (glfwGetKey (window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    camPos += camSpeed * vec3(1.0f, 0.0f, 0.0f);
+    if (glfwGetKey (window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    camPos -= camSpeed * vec3(1.0f, 0.0f, 0.0f);
+    if (glfwGetKey (window, GLFW_KEY_W) == GLFW_PRESS)
+    camPos += camSpeed * vec3(0.0f, 1.0f, 0.0f);
+    if (glfwGetKey (window, GLFW_KEY_S) == GLFW_PRESS)
+    camPos -= camSpeed * vec3(0.0f, 1.0f, 0.0f);
+    //up date the view
+    View = lookAt(camPos,camDirection,camUp);
+
+    mat4 Model = mat4(1.0f);
+    Model = translate(Model,vec3(-2.0f, -0.5f, 3.0f));
+    mat4 MVP = Projection * View * Model;
+
+    GLuint ModelID = glGetUniformLocation(ShaderProgram, "Model");
+    glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+
+    GLuint MatrixID = glGetUniformLocation(ShaderProgram, "MVP");
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, text);
+    glUniform1i(TextureID, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 18);
+
+    //-------------------------------------------------------------------------------------------------
+    glBindVertexArray(VAO1);
+
+    //up date the view
+    Model = mat4(1.0f);
+    Model = scale(Model,vec3(2.5f, 2.5f ,2.5f));
+    Model = translate(Model,vec3(0.0f, 0.1f, 0.0f));
+    MVP = Projection * View * Model;
+
+    ModelID = glGetUniformLocation(ShaderProgram, "Model");
+    glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+
+    MatrixID = glGetUniformLocation(ShaderProgram, "MVP");
+
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, text);
+    glUniform1i(TextureID, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 18);
+
+    //-------------------------------------------------------------------------------------------------
+    glBindVertexArray(VAO2);
+
+    //up date the view
+    View = lookAt(camPos,camDirection,camUp);
+    Model = mat4(1.0f);
+    Model = translate(Model,vec3(3.0f, 0.0f, -2.5f));
+    MVP = Projection * View * Model;
+
+    ModelID = glGetUniformLocation(ShaderProgram, "Model");
+    glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+
+    MatrixID = glGetUniformLocation(ShaderProgram, "MVP");
+
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, text);
+    glUniform1i(TextureID, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 18);
+    //-------------------------------------------------------------------------------------------------
+    glBindVertexArray(VAO3);
+
+    //up date the view
+    View = lookAt(camPos,camDirection,camUp);
+    Model = mat4(1.0f);
+    Model = scale(Model,vec3(10.0f, 10.0f ,10.0f));
+    Model = translate(Model,vec3(0.0f, -0.1f, 0.0f));
+    MVP = Projection * View *Model;
+
+    ModelID = glGetUniformLocation(ShaderProgram, "Model");
+    glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+
+    MatrixID = glGetUniformLocation(ShaderProgram, "MVP");
+
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, text2);
+    glUniform1i(TextureID, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 18);
+  //-------------------------------------------------------------------------------------------------
+    glBindVertexArray(VAO4);
+    //up date the view
+    View = lookAt(camPos,camDirection,camUp);
+    Model = mat4(1.0f);
+    Model = scale(Model,vec3(10.0f, 10.0f ,10.0f));
+    Model = translate(Model,vec3(0.0f, -0.1f, -1.0f));
+    MVP = Projection * View *Model;
+
+    ModelID = glGetUniformLocation(ShaderProgram, "Model");
+    glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+    MatrixID = glGetUniformLocation(ShaderProgram, "MVP");
+
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, text3);
+    glUniform1i(TextureID, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 18);
+    //--------------------------------------------------------------------------------------------------
+    glBindVertexArray(VAO5);
+
+    //up date the view
+    View = lookAt(camPos,camDirection,camUp);
+    Model = mat4(1.0f);
+    Model = translate(Model,vec3(0.0f, -1.0f, 5.0f));
+    Model = scale(Model,vec3(0.05f, 0.05f ,0.05f));
+
+    MVP = Projection * View *Model;
+
+    ModelID = glGetUniformLocation(ShaderProgram, "Model");
+    glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+
+    MatrixID = glGetUniformLocation(ShaderProgram, "MVP");
+
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, text4);
+    glUniform1i(TextureID, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 9741);
+
+    glBindVertexArray(VAO5);
+    //up date the view
+    View = lookAt(camPos,camDirection,camUp);
+    Model = mat4(1.0f);
+    Model = translate(Model,vec3(5.0f, -1.0f, -3.0f));
+    Model = scale(Model,vec3(0.03f, 0.03f ,0.03f));
+
+    ModelID = glGetUniformLocation(ShaderProgram, "Model");
+    glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+
+    MVP = Projection * View *Model;
+
+    MatrixID = glGetUniformLocation(ShaderProgram, "MVP");
+
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, text4);
+    glUniform1i(TextureID, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 9741);
+
+    glBindVertexArray(VAO5);
+    //up date the view
+    View = lookAt(camPos,camDirection,camUp);
+    Model = mat4(1.0f);
+    Model = translate(Model,vec3(-7.0f, -1.0f, -3.0f));
+    Model = scale(Model,vec3(0.04f, 0.04f ,0.04f));
+
+    MVP = Projection * View *Model;
+
+    ModelID = glGetUniformLocation(ShaderProgram, "Model");
+    glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+
+    MatrixID = glGetUniformLocation(ShaderProgram, "MVP");
+
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, text4);
+    glUniform1i(TextureID, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 9741);
+
+
+       glBindVertexArray(VAO5);
+    //up date the view
+    View = lookAt(camPos,camDirection,camUp);
+    Model = mat4(1.0f);
+    Model = translate(Model,vec3(7.0f, -1.0f, -2.0f));
+    Model = scale(Model,vec3(0.04f, 0.04f ,0.04f));
+
+    MVP = Projection * View *Model;
+
+    ModelID = glGetUniformLocation(ShaderProgram, "Model");
+    glUniformMatrix4fv(ModelID, 1, GL_FALSE, &Model[0][0]);
+
+
+    MatrixID = glGetUniformLocation(ShaderProgram, "MVP");
+
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, text4);
+    glUniform1i(TextureID, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 9741);
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+
+}
+glDeleteVertexArrays(1, &VAO);
+glDeleteBuffers(1, &VBO);
+glDeleteVertexArrays(1, &VAO1);
+glDeleteBuffers(1, &VBO1);
+glDeleteVertexArrays(1, &VAO2);
+glDeleteBuffers(1, &VBO2);
+glDeleteVertexArrays(1, &VAO3);
+glDeleteBuffers(1, &VBO3);
+glDeleteVertexArrays(1, &VAO4);
+glDeleteBuffers(1, &VBO4);
+glDeleteVertexArrays(1, &VAO5 );
+glDeleteBuffers(1, &VBO5);
+glfwDestroyWindow(window);
+glfwTerminate();
+}

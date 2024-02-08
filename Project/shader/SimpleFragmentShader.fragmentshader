@@ -1,0 +1,32 @@
+///frag
+#version 330 core
+
+in vec2 vTexture;
+in vec3 vNormal;
+out vec4 color;
+in vec3 vPos;
+uniform sampler2D ourTexture;
+uniform vec3 lightColor;
+uniform vec3 lightPos;
+
+void main()
+{
+/*
+    float ambientIntens = 0.8;
+    vec3 normal = normalize(vNormal);
+    vec3 lightDir = normalize(lightPos - vPos);
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec4 res = texture(ourTexture, vTexture);
+    color = vec4((ambientIntens+diff) * res);
+*/
+
+  float ambientIntens = 0.6;
+    vec3 normal = normalize(vNormal);
+    vec3 ambient= lightColor * ambientIntens;
+    vec3 lightDir = normalize(lightPos - vPos);
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 diffuse = diff * lightColor;
+    vec4 res = texture(ourTexture, vTexture);
+    color = vec4(vec4(ambient + diffuse,1.0 ) * res);
+
+}

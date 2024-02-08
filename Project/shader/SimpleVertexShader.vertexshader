@@ -1,0 +1,20 @@
+///vert
+#version 330 core
+
+layout(location = 0) in vec3 VertexPosition;
+layout(location = 1) in vec3 VertexNormal;
+layout(location = 2) in vec2 VertexTexture;
+
+out vec3 vNormal;
+out vec2 vTexture;
+uniform mat4 MVP;
+out vec3 vPos;
+uniform mat4 Model;
+
+void main(){
+    gl_Position.xyz = VertexPosition;
+    gl_Position = MVP * vec4(VertexPosition, 1);
+    vNormal = VertexNormal ;
+    vTexture = VertexTexture;
+    vPos = vec3 (Model * vec4(VertexPosition, 1));
+}
