@@ -11,7 +11,7 @@ For this project, we were challenged to craft a 3D scene with OpenGL3. Opting fo
   <img src="https://github.com/RB-Younes/3D-scene-creation-OpenGL3-/assets/108153787/92b5ea8e-99e9-4ab3-a451-f9ef79e1bc0d" alt="image" width="300">
 </p>
 
-## Contributors
+## Collaborators
 
 - [@RB-Younes](https://github.com/RB-Younes)
 - [@NaaaaaaaaaaDaa](https://github.com/NaaaaaaaaaaDaa)
